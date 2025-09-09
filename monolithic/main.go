@@ -1,6 +1,5 @@
 package main
 
-// TODO: FIX MISSING 'africa - 1' from input1.txt
 import (
 	"fmt"
 	"io"
@@ -50,7 +49,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	inputString := string(inputBytes)
+	// I add a space after the string for the last word to be counted correctly, instead of adding all the word check/count logic after the loop again
+	inputString := string(inputBytes) + " "
 
 	// This slice is used to store the words and their frequencies in descending order by frequency
 	wordFreq := make([]wordFreqEntry, 0)
