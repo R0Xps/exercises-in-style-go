@@ -35,7 +35,34 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stopWords := strings.Split(string(stopWordsBytes), ",")
+	stopWordsString := string(stopWordsBytes) + " "
+
+	stopWords := make([]string, 0)
+
+	start := -1
+	// Iterate over characters in the stop words file
+	for i, c := range stopWordsString {
+		if start == -1 {
+			// We're currently not in a word
+			if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' {
+				// This means we found the start of a word
+				start = i
+			}
+		} else {
+			if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' {
+				// We're still inside a word
+				continue
+			}
+			// When we reach this point, we're at the character immediately after a word
+
+			// Copy the entire word and convert it to lowercase
+			word := strings.ToLower(stopWordsString[start:i])
+			// Add the word to the stopWords slice
+			stopWords = append(stopWords, word)
+			// After we're done with a word, we want to look for the next one, so we reset the start index to -1
+			start = -1
+		}
+	}
 
 	// Open and read the file located at inputPath
 	inputFile, err := os.Open(inputPath)
@@ -55,7 +82,7 @@ func main() {
 	// This slice is used to store the words and their frequencies in descending order by frequency
 	wordFreq := make([]wordFreqEntry, 0)
 
-	start := -1
+	start = -1
 	// Iterate over characters in the input file
 	for i, c := range inputString {
 		if start == -1 {
