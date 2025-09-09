@@ -64,7 +64,9 @@ func (swm *StopWordManager) init(message []any) {
 		log.Fatal(err)
 	}
 
-	swm.stopWords = strings.Split(string(bytes), ",")
+	str := filterAndNormalize(bytes)
+
+	swm.stopWords = strings.Fields(str)
 }
 
 // Filter received words and only forward non-stop words to wordFrequencyManager

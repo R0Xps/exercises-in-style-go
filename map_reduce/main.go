@@ -27,7 +27,7 @@ func main() {
 		log.Fatal("required arguments: <stop_words_file> <input_file>")
 	}
 
-	stopWords = strings.Split(readInputFile(os.Args[1]), ",")
+	stopWords = getStopWords(os.Args[1])
 
 	data := readInputFile(os.Args[2])
 	parts := lop.Map(partition(data, 200), splitWords)
@@ -40,6 +40,12 @@ func main() {
 	for _, wf := range wordFreq[:N] {
 		fmt.Println(wf.word, "-", wf.freq)
 	}
+}
+
+func getStopWords(filename string) []string {
+	rawStopWords := readInputFile(filename)
+	filteredStopWords := filterAndNormalize([]byte(rawStopWords))
+	return strings.Fields(filteredStopWords)
 }
 
 // Read the input file and return its content as a string

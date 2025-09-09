@@ -98,7 +98,7 @@ func insertStopWords(db *sql.DB, stopWordsFile string) {
 		log.Fatal(err)
 	}
 
-	stopWords := strings.Split(string(bytes), ",")
+	stopWords := strings.Fields(filterAndNormalize(bytes))
 	for _, word := range stopWords {
 		db.Exec("INSERT INTO stop_words (word) VALUES (?)", word)
 	}

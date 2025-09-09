@@ -57,17 +57,9 @@ func split(str string) []string {
 func removeStopWords(stopWordsPath string) func([]string) []string {
 	// Return a new slice of strings containing only words that should be counted (non-stop words)
 	return func(allWords []string) []string {
-		stopWordsFile, err := os.Open(stopWordsPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer stopWordsFile.Close()
-
-		stopWordsBytes, err := io.ReadAll(stopWordsFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		stopWords := strings.Split(string(stopWordsBytes), ",")
+		stopWordsBytes := readInputFile(stopWordsPath)
+		stopWordsStr := filterAndNormalize(stopWordsBytes)
+		stopWords := strings.Fields(stopWordsStr)
 
 		words := make([]string, 0)
 		for _, w := range allWords {

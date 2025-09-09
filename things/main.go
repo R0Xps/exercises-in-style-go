@@ -80,8 +80,10 @@ func NewStopWordsManager(stopWordsFilePath string) *StopWordsManager {
 		log.Fatal(err)
 	}
 
+	stopWordsStr := filterAndNormalize(data)
+
 	return &StopWordsManager{
-		stopWords: strings.Split(string(data), ","),
+		stopWords: strings.Fields(stopWordsStr),
 	}
 }
 

@@ -1,5 +1,6 @@
 package main
 
+// TODO: FIX MISSING 'africa - 1' from input1.txt
 import (
 	"fmt"
 	"io"
