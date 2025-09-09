@@ -1,0 +1,8 @@
+africa - 1
+india - 1
+lions - 1
+live - 2
+mostly - 2
+tigers - 1
+white - 1
+wild - 1
