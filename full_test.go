@@ -33,22 +33,26 @@ func TestOutputs(t *testing.T) {
 					args = append(args, dbFile)
 				}
 
-				stdOut := bytes.NewBuffer(nil)
-
 				cmd := exec.Command("go", args...)
-				cmd.Dir, _ = os.Getwd()
-				cmd.Stdout = stdOut
-				cmd.Stderr = stdOut
-
-				err := cmd.Run()
+				stdoutPipe, err := cmd.StdoutPipe()
 				if err != nil {
-					t.Error(cmd.Dir)
-					t.Errorf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
+					t.Fatalf("Error opening stdout pipe: %v", err)
+				}
+				cmd.Dir, _ = os.Getwd()
+
+				err = cmd.Start()
+				if err != nil {
+					t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
 				}
 
-				stdOutBytes, err := io.ReadAll(stdOut)
+				stdOutBytes, err := io.ReadAll(stdoutPipe)
 				if err != nil {
 					t.Errorf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
+				}
+
+				err = cmd.Wait()
+				if err != nil {
+					t.Errorf("Error running command 'go run': %v\n", err)
 				}
 
 				f, err := os.CreateTemp(os.TempDir(), "test_"+item.Name())
@@ -57,27 +61,35 @@ func TestOutputs(t *testing.T) {
 				}
 				_, err = f.Write(stdOutBytes)
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 				err = f.Close()
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 
 				sortCmd := exec.Command("sort", f.Name())
-				sortCmd.Stdout = stdOut
-				sortCmd.Stderr = stdOut
-				err = sortCmd.Run()
+				stdoutPipe, err = sortCmd.StdoutPipe()
 				if err != nil {
-					log.Fatal(err)
+					t.Fatalf("Error opening stdout pipe: %v", err)
+				}
+
+				err = sortCmd.Start()
+				if err != nil {
+					t.Fatal(err)
 					return
 				}
 
-				stdOutBytes, err = io.ReadAll(stdOut)
+				stdOutBytes, err = io.ReadAll(stdoutPipe)
 				if err != nil {
 					t.Errorf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
+				}
+
+				err = sortCmd.Wait()
+				if err != nil {
+					t.Errorf("Error running command 'sort': %v", err)
 				}
 
 				f2, err := os.CreateTemp(os.TempDir(), "sorted_test_"+item.Name())
@@ -86,12 +98,12 @@ func TestOutputs(t *testing.T) {
 				}
 				_, err = f2.Write(stdOutBytes)
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 				err = f2.Close()
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 
@@ -109,12 +121,12 @@ func TestOutputs(t *testing.T) {
 
 				err = os.Remove(f.Name())
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 				err = os.Remove(f2.Name())
 				if err != nil {
-					log.Fatal(err)
+					t.Fatal(err)
 					return
 				}
 			}
