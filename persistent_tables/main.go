@@ -177,10 +177,7 @@ func insertData(db *sql.DB, inputFile string) {
 	}
 
 	var wordId int
-	err = db.QueryRow("SELECT MAX(id) FROM words").Scan(&wordId)
-	if err != nil {
-		log.Fatal("Error getting new word id:", err)
-	}
+	_ = db.QueryRow("SELECT MAX(id) FROM words").Scan(&wordId)
 	wordId++
 	for _, word := range words {
 		if slices.Contains(stopWords, word) {
