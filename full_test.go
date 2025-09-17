@@ -47,17 +47,17 @@ func TestOutputs(t *testing.T) {
 
 				stdOutBytes, err := io.ReadAll(stdoutPipe)
 				if err != nil {
-					t.Errorf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
+					t.Fatalf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
 				}
 
 				err = cmd.Wait()
 				if err != nil {
-					t.Errorf("Error running command 'go run': %v\n", err)
+					t.Fatalf("Error running command 'go run': %v\n", err)
 				}
 
 				f, err := os.CreateTemp(os.TempDir(), "test_"+item.Name())
 				if err != nil {
-					t.Errorf("Error creating temporary file: %v", err)
+					t.Fatalf("Error creating temporary file: %v", err)
 				}
 				_, err = f.Write(stdOutBytes)
 				if err != nil {
@@ -84,17 +84,17 @@ func TestOutputs(t *testing.T) {
 
 				stdOutBytes, err = io.ReadAll(stdoutPipe)
 				if err != nil {
-					t.Errorf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
+					t.Fatalf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
 				}
 
 				err = sortCmd.Wait()
 				if err != nil {
-					t.Errorf("Error running command 'sort': %v", err)
+					t.Fatalf("Error running command 'sort': %v", err)
 				}
 
 				f2, err := os.CreateTemp(os.TempDir(), "sorted_test_"+item.Name())
 				if err != nil {
-					t.Errorf("Error creating temporary file: %v", err)
+					t.Fatalf("Error creating temporary file: %v", err)
 				}
 				_, err = f2.Write(stdOutBytes)
 				if err != nil {
