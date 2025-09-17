@@ -40,9 +40,10 @@ func (wfm *WordFrequencyManager) Start() {
 
 // Handle received messages, if they are a known type, run their appropriate functions, otherwise ignore them
 func (wfm *WordFrequencyManager) dispatch(message []any) {
-	if message[0] == "word" {
+	switch message[0] {
+	case "word":
 		wfm.increment(message[1:])
-	} else if message[0] == "top25" {
+	case "top25":
 		wfm.top25(message[1:])
 	}
 }

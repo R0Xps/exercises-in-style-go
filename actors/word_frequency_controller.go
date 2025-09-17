@@ -36,11 +36,12 @@ func (wfc *WordFrequencyController) Start() {
 
 // Handle received messages, if they are a known type, run their appropriate functions, otherwise print an error message
 func (wfc *WordFrequencyController) dispatch(message []any) {
-	if message[0] == "run" {
+	switch message[0] {
+	case "run":
 		wfc.run(message[1:])
-	} else if message[0] == "top25" {
+	case "top25":
 		wfc.display(message[1:])
-	} else {
+	default:
 		log.Println("Unknown message type:", message[0])
 	}
 }

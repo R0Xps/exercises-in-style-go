@@ -40,11 +40,12 @@ func (dsm *DataStorageManager) Start() {
 
 // Handle received messages, if they are a known type, run their appropriate functions, otherwise forward them to stopWordManager
 func (dsm *DataStorageManager) dispatch(message []any) {
-	if message[0] == "init" {
+	switch message[0] {
+	case "init":
 		dsm.init(message[1:])
-	} else if message[0] == "send_word_freqs" {
+	case "send_word_freqs":
 		dsm.processWords(message[1:])
-	} else {
+	default:
 		dsm.stopWordManager.Send(message)
 	}
 }

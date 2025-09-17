@@ -41,11 +41,12 @@ func (swm *StopWordManager) Start() {
 
 // Handle received messages, if they are a known type, run their appropriate functions, otherwise forward them to wordFrequencyManager
 func (swm *StopWordManager) dispatch(message []any) {
-	if message[0] == "init" {
+	switch message[0] {
+	case "init":
 		swm.init(message[1:])
-	} else if message[0] == "filter" {
+	case "filter":
 		swm.filter(message[1:])
-	} else {
+	default:
 		swm.wordFrequencyManager.Send(message)
 	}
 }
