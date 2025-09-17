@@ -28,7 +28,7 @@ func TestOutputs(t *testing.T) {
 				packagePath := "." + string(os.PathSeparator) + item.Name()
 				args := []string{"run", packagePath, "stop_words.txt", inputFile}
 				if item.Name() == "persistent_tables" {
-					dbFile := fmt.Sprintf(".db%v%v%v.db", string(os.PathSeparator), inputFile, getRandomDBName())
+					dbFile := fmt.Sprintf("%v%v%v%v.db", os.TempDir(), string(os.PathSeparator), inputFile, getRandomDBName())
 					args = append(args, dbFile)
 				}
 
