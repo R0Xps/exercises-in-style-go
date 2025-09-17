@@ -51,13 +51,16 @@ func main() {
 	// Get all words and their frequencies (25 words max)
 	rows, err := db.Query("SELECT word, COUNT(*) AS freq FROM words GROUP BY word ORDER BY freq DESC LIMIT 25")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error retrieving words and their frequencies from database:", err)
 	}
 
 	wordFreq := make([]wordFreqEntry, 0, 25)
 	for rows.Next() {
 		wordFreqEntry := wordFreqEntry{}
-		rows.Scan(&wordFreqEntry.word, &wordFreqEntry.freq)
+		err = rows.Scan(&wordFreqEntry.word, &wordFreqEntry.freq)
+		if err != nil {
+			log.Fatal("Error retrieving words and their frequencies from database:", err)
+		}
 		wordFreq = append(wordFreq, wordFreqEntry)
 	}
 
@@ -81,9 +84,18 @@ func fileExists(path string) (bool, error) {
 
 // Create the required tables in the database
 func createTables(db *sql.DB) {
-	db.Exec("CREATE TABLE documents (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
-	db.Exec("CREATE TABLE words (id INTEGER PRIMARY KEY, doc_id INTEGER, word TEXT, FOREIGN KEY(doc_id) REFERENCES documents(id))")
-	db.Exec("CREATE TABLE stop_words (word TEXT PRIMARY KEY)")
+	_, err := db.Exec("CREATE TABLE documents (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
+	if err != nil {
+		log.Fatal("Error creating documents table:", err)
+	}
+	_, err = db.Exec("CREATE TABLE words (id INTEGER PRIMARY KEY, doc_id INTEGER, word TEXT, FOREIGN KEY(doc_id) REFERENCES documents(id))")
+	if err != nil {
+		log.Fatal("Error creating words table:", err)
+	}
+	_, err = db.Exec("CREATE TABLE stop_words (word TEXT PRIMARY KEY)")
+	if err != nil {
+		log.Fatal("Error creating stop words table:", err)
+	}
 }
 
 // Insert the words from the stop words file into the stop_words table
@@ -101,7 +113,10 @@ func insertStopWords(db *sql.DB, stopWordsFile string) {
 
 	stopWords := strings.Fields(filterAndNormalize(bytes))
 	for _, word := range stopWords {
-		db.Exec("INSERT INTO stop_words (word) VALUES (?)", word)
+		_, err = db.Exec("INSERT INTO stop_words (word) VALUES (?)", word)
+		if err != nil {
+			log.Fatal("Error inserting stop words into database:", err)
+		}
 	}
 }
 
@@ -121,31 +136,47 @@ func insertData(db *sql.DB, inputFile string) {
 	filteredInput := filterAndNormalize(bytes)
 	words := strings.Fields(filteredInput)
 
-	db.Exec("INSERT INTO documents (name) VALUES (?)", inputFile)
+	_, err = db.Exec("INSERT INTO documents (name) VALUES (?)", inputFile)
+	if err != nil {
+		log.Fatal("Error inserting new document into database:", err)
+	}
 	var docId int
-	db.QueryRow("SELECT MAX(id) FROM documents WHERE name=?", inputFile).Scan(&docId)
+	err = db.QueryRow("SELECT MAX(id) FROM documents WHERE name=?", inputFile).Scan(&docId)
+	if err != nil {
+		log.Fatal("Error getting new document id:", err)
+	}
 
 	var stopWords []string
 	rows, err := db.Query("SELECT word FROM stop_words")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error retrieving stop words from database:", err)
 	}
 
 	for rows.Next() {
 		var word string
-		rows.Scan(&word)
+		err = rows.Scan(&word)
+		if err != nil {
+			log.Fatal("Error retrieving stop words from database:", err)
+		}
 		stopWords = append(stopWords, word)
 	}
 
 	var wordId int
-	db.QueryRow("SELECT MAX(id) FROM words").Scan(&wordId)
+	err = db.QueryRow("SELECT MAX(id) FROM words").Scan(&wordId)
+	if err != nil {
+		log.Fatal("Error getting new word id:", err)
+	}
 	wordId++
 	for _, word := range words {
 		if slices.Contains(stopWords, word) {
 			continue
 		}
 
-		db.Exec("INSERT INTO words (id, doc_id, word) values (?, ?, ?)", wordId, docId, word)
+		_, err = db.Exec("INSERT INTO words (id, doc_id, word) values (?, ?, ?)", wordId, docId, word)
+		if err != nil {
+			log.Fatal("Error inserting data:", err)
+			return
+		}
 		wordId++
 	}
 }
