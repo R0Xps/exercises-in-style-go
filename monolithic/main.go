@@ -29,7 +29,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer stopWordsFile.Close()
+	defer func(stopWordsFile *os.File) {
+		err := stopWordsFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(stopWordsFile)
 
 	stopWordsBytes, err := io.ReadAll(stopWordsFile)
 	if err != nil {
@@ -70,7 +75,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer inputFile.Close()
+	defer func(inputFile *os.File) {
+		err := inputFile.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(inputFile)
 
 	inputBytes, err := io.ReadAll(inputFile)
 	if err != nil {

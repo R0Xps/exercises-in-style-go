@@ -34,7 +34,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(db)
 
 	// If the database file doesn't exist, create the tables and insert the data into them (automatically creates the database file)
 	exists, err := fileExists(dbFile)
@@ -104,7 +109,12 @@ func insertStopWords(db *sql.DB, stopWordsFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(file)
 
 	bytes, err := io.ReadAll(file)
 	if err != nil {
@@ -126,7 +136,12 @@ func insertData(db *sql.DB, inputFile string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(file)
 
 	bytes, err := io.ReadAll(file)
 	if err != nil {

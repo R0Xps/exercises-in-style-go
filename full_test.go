@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -54,13 +55,25 @@ func TestOutputs(t *testing.T) {
 				if err != nil {
 					t.Errorf("Error creating temporary file: %v", err)
 				}
-				f.Write(stdOutBytes)
-				f.Close()
+				_, err = f.Write(stdOutBytes)
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+				err = f.Close()
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 
 				sortCmd := exec.Command("sort", f.Name())
 				sortCmd.Stdout = stdOut
 				sortCmd.Stderr = stdOut
-				sortCmd.Run()
+				err = sortCmd.Run()
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 
 				stdOutBytes, err = io.ReadAll(stdOut)
 				if err != nil {
@@ -71,8 +84,16 @@ func TestOutputs(t *testing.T) {
 				if err != nil {
 					t.Errorf("Error creating temporary file: %v", err)
 				}
-				f2.Write(stdOutBytes)
-				f2.Close()
+				_, err = f2.Write(stdOutBytes)
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+				err = f2.Close()
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 
 				expectedOutputFile := fmt.Sprintf(".output%v%v", string(os.PathSeparator), inputFile)
 				diffOut := bytes.NewBuffer(nil)
@@ -86,8 +107,16 @@ func TestOutputs(t *testing.T) {
 					t.Error(diffCmd.Stdout, diffCmd.Stderr)
 				}
 
-				os.Remove(f.Name())
-				os.Remove(f2.Name())
+				err = os.Remove(f.Name())
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
+				err = os.Remove(f2.Name())
+				if err != nil {
+					log.Fatal(err)
+					return
+				}
 			}
 		}
 	}
@@ -96,6 +125,10 @@ func TestOutputs(t *testing.T) {
 
 func getRandomDBName() string {
 	randBytes := make([]byte, 16)
-	rand.Read(randBytes)
+	_, err := rand.Read(randBytes)
+	if err != nil {
+		log.Fatal(err)
+		return ""
+	}
 	return base64.RawURLEncoding.EncodeToString(randBytes)
 }

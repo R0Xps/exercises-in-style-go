@@ -65,7 +65,12 @@ func extractWords(filePath any) any {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close()
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(file)
 
 		bytes, err := io.ReadAll(file)
 		if err != nil {
