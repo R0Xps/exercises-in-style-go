@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -20,7 +21,7 @@ func main() {
 
 // Read the input file from the given path and return its contents as a slice of bytes
 func readInputFile(filePath string) []byte {
-	file, err := os.Open(filePath)
+	file, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		log.Fatal(err)
 	}

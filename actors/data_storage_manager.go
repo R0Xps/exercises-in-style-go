@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -53,7 +54,7 @@ func (dsm *DataStorageManager) init(message []any) {
 	inputFilePath := message[0].(string)
 	dsm.stopWordManager = message[1].(*StopWordManager)
 
-	file, err := os.Open(inputFilePath)
+	file, err := os.Open(filepath.Clean(inputFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}

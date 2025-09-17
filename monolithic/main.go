@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	inputPath := args[1]
 
 	// Open the file located at stopWordsPath and read, then convert it to a slice of words
-	stopWordsFile, err := os.Open(stopWordsPath)
+	stopWordsFile, err := os.Open(filepath.Clean(stopWordsPath))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +66,7 @@ func main() {
 	}
 
 	// Open and read the file located at inputPath
-	inputFile, err := os.Open(inputPath)
+	inputFile, err := os.Open(filepath.Clean(inputPath))
 	if err != nil {
 		log.Fatal(err)
 	}

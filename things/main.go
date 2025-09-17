@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -27,7 +28,7 @@ type DataStorageManager struct {
 
 // Create and return a pointer to a new DataStorageManager object with its data being the filtered and normalized version of the contents of the file at inputFilePath
 func NewDataStorageManager(inputFilePath string) *DataStorageManager {
-	file, err := os.Open(inputFilePath)
+	file, err := os.Open(filepath.Clean(inputFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +71,7 @@ type StopWordsManager struct {
 
 // Create and return a pointer to a new StopWordsManager with its stopWords field initialized to the words in the file at stopWordsFilePath
 func NewStopWordsManager(stopWordsFilePath string) *StopWordsManager {
-	file, err := os.Open(stopWordsFilePath)
+	file, err := os.Open(filepath.Clean(stopWordsFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}

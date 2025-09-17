@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -87,7 +88,7 @@ func createTables(db *sql.DB) {
 
 // Insert the words from the stop words file into the stop_words table
 func insertStopWords(db *sql.DB, stopWordsFile string) {
-	file, err := os.Open(stopWordsFile)
+	file, err := os.Open(filepath.Clean(stopWordsFile))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,7 +107,7 @@ func insertStopWords(db *sql.DB, stopWordsFile string) {
 
 // Insert the words from the input file into the words table, along with a new entry in the documents table referring to the input file itself
 func insertData(db *sql.DB, inputFile string) {
-	file, err := os.Open(inputFile)
+	file, err := os.Open(filepath.Clean(inputFile))
 	if err != nil {
 		log.Fatal(err)
 	}

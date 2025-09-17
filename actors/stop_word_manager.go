@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 )
@@ -54,7 +55,7 @@ func (swm *StopWordManager) init(message []any) {
 	stopWordsFilePath := message[0].(string)
 	swm.wordFrequencyManager = message[1].(*WordFrequencyManager)
 
-	file, err := os.Open(stopWordsFilePath)
+	file, err := os.Open(filepath.Clean(stopWordsFilePath))
 	if err != nil {
 		log.Fatal(err)
 	}

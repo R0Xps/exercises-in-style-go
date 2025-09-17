@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -50,7 +51,7 @@ func getStopWords(filename string) []string {
 
 // Read the input file and return its content as a string
 func readInputFile(filename string) string {
-	file, err := os.Open(filename)
+	file, err := os.Open(filepath.Clean(filename))
 	if err != nil {
 		log.Fatal(err)
 	}
