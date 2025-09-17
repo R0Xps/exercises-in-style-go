@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -25,114 +24,133 @@ func TestOutputs(t *testing.T) {
 			if strings.HasPrefix(item.Name(), ".") {
 				continue
 			}
-			if item.IsDir() {
-				packagePath := "." + string(os.PathSeparator) + item.Name()
-				args := []string{"run", packagePath, "stop_words.txt", inputFile}
-				if item.Name() == "persistent_tables" {
-					dbFile := fmt.Sprintf("%v%v%v%v.db", os.TempDir(), string(os.PathSeparator), inputFile, getRandomDBName())
-					args = append(args, dbFile)
-				}
+			func() {
+				if item.IsDir() {
+					packagePath := "." + string(os.PathSeparator) + item.Name()
+					args := []string{"run", packagePath, "stop_words.txt", inputFile}
+					if item.Name() == "persistent_tables" {
+						dbFile := fmt.Sprintf("%v%v%v%v.db", os.TempDir(), string(os.PathSeparator), inputFile, getRandomDBName())
+						args = append(args, dbFile)
+						defer func(name string) {
+							err := os.Remove(name)
+							if err != nil {
+								t.Fatalf("Error removing temp file: %v", err)
+							}
+						}(dbFile)
+					}
 
-				cmd := exec.Command("go", args...)
-				stdoutPipe, err := cmd.StdoutPipe()
-				if err != nil {
-					t.Fatalf("Error opening stdout pipe: %v", err)
-				}
-				cmd.Dir, _ = os.Getwd()
+					cmd := exec.Command("go", args...)
+					stdoutPipe, err := cmd.StdoutPipe()
+					if err != nil {
+						t.Fatalf("Error opening stdout pipe: %v", err)
+					}
 
-				err = cmd.Start()
-				if err != nil {
-					t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
-				}
+					err = cmd.Start()
+					if err != nil {
+						t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
+					}
+					defer func(cmd *exec.Cmd) {
+						err := cmd.Wait()
+						if err != nil {
+							t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
+						}
+					}(cmd)
 
-				stdOutBytes, err := io.ReadAll(stdoutPipe)
-				if err != nil {
-					t.Fatalf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
-				}
+					stdOutBytes, err := io.ReadAll(stdoutPipe)
+					if err != nil {
+						t.Fatalf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
+					}
 
-				err = cmd.Wait()
-				if err != nil {
-					t.Fatalf("Error running command 'go run': %v\n", err)
-				}
+					f, err := os.CreateTemp(os.TempDir(), "test_"+item.Name())
+					if err != nil {
+						t.Fatalf("Error creating temporary file: %v", err)
+					}
+					defer func(name string) {
+						err := os.Remove(name)
+						if err != nil {
+							t.Fatalf("Error removing temp file: %v", err)
+						}
+					}(f.Name())
+					defer func(f *os.File) {
+						err := f.Close()
+						if err != nil {
+							t.Fatalf("Error closing temporary file: %v", err)
+						}
+					}(f)
+					_, err = f.Write(stdOutBytes)
+					if err != nil {
+						t.Fatal(err)
+						return
+					}
 
-				f, err := os.CreateTemp(os.TempDir(), "test_"+item.Name())
-				if err != nil {
-					t.Fatalf("Error creating temporary file: %v", err)
-				}
-				_, err = f.Write(stdOutBytes)
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
-				err = f.Close()
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
+					sortCmd := exec.Command("sort", f.Name())
+					stdoutPipe, err = sortCmd.StdoutPipe()
+					if err != nil {
+						t.Fatalf("Error opening stdout pipe: %v", err)
+					}
 
-				sortCmd := exec.Command("sort", f.Name())
-				stdoutPipe, err = sortCmd.StdoutPipe()
-				if err != nil {
-					t.Fatalf("Error opening stdout pipe: %v", err)
-				}
+					err = sortCmd.Start()
+					if err != nil {
+						t.Fatalf("Error running sort command: %v", err)
+						return
+					}
+					defer func(sortCmd *exec.Cmd) {
+						err := sortCmd.Wait()
+						if err != nil {
+							t.Fatalf("Error running sort command: %v", err)
+						}
+					}(sortCmd)
 
-				err = sortCmd.Start()
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
+					stdOutBytes, err = io.ReadAll(stdoutPipe)
+					if err != nil {
+						t.Fatalf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
+					}
 
-				stdOutBytes, err = io.ReadAll(stdoutPipe)
-				if err != nil {
-					t.Fatalf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
-				}
+					f2, err := os.CreateTemp(os.TempDir(), "sorted_test_"+item.Name())
+					if err != nil {
+						t.Fatalf("Error creating temporary file: %v", err)
+					}
+					defer func(name string) {
+						err := os.Remove(name)
+						if err != nil {
+							t.Fatalf("Error removing temp file: %v", err)
+						}
+					}(f2.Name())
+					defer func(f2 *os.File) {
+						err := f2.Close()
+						if err != nil {
+							t.Fatalf("Error closing temporary file: %v", err)
+						}
+					}(f2)
 
-				err = sortCmd.Wait()
-				if err != nil {
-					t.Fatalf("Error running command 'sort': %v", err)
-				}
+					_, err = f2.Write(stdOutBytes)
+					if err != nil {
+						t.Fatal(err)
+						return
+					}
 
-				f2, err := os.CreateTemp(os.TempDir(), "sorted_test_"+item.Name())
-				if err != nil {
-					t.Fatalf("Error creating temporary file: %v", err)
-				}
-				_, err = f2.Write(stdOutBytes)
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
-				err = f2.Close()
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
+					expectedOutputFile := fmt.Sprintf(".output%v%v", string(os.PathSeparator), inputFile)
 
-				expectedOutputFile := fmt.Sprintf(".output%v%v", string(os.PathSeparator), inputFile)
-				diffOut := bytes.NewBuffer(nil)
+					diffCmd := exec.Command("diff", "-u", f2.Name(), expectedOutputFile)
+					stdoutPipe, err = diffCmd.StdoutPipe()
+					if err != nil {
+						t.Fatalf("Error opening stdout pipe: %v", err)
+					}
 
-				diffCmd := exec.Command("diff", "-u", f2.Name(), expectedOutputFile)
-				diffCmd.Stdout = diffOut
-				diffCmd.Stderr = diffOut
-
-				err = diffCmd.Run()
-				if err != nil {
-					t.Error(diffCmd.Stdout, diffCmd.Stderr)
+					err = diffCmd.Start()
+					if err != nil {
+						t.Fatal(stdoutPipe)
+					}
+					defer func(diffCmd *exec.Cmd) {
+						err := diffCmd.Wait()
+						if err != nil {
+							t.Fatalf("Error running diff command: %v", err)
+						}
+					}(diffCmd)
 				}
-
-				err = os.Remove(f.Name())
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
-				err = os.Remove(f2.Name())
-				if err != nil {
-					t.Fatal(err)
-					return
-				}
-			}
+			}()
 		}
 	}
-
 }
 
 func getRandomDBName() string {
