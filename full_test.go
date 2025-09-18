@@ -3,11 +3,11 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -15,21 +15,27 @@ import (
 func TestOutputs(t *testing.T) {
 	items, err := os.ReadDir(".")
 	if err != nil {
-		t.Fatalf("Error reading directory: %v", err)
+		t.Fatalf("Error reading root directory: %v", err)
 	}
 
-	inputFiles := []string{"input1.txt", "input2.txt", "pride-and-prejudice.txt"}
+	inputFilesPath := filepath.Join("examples", "input")
+	inputFiles, err := os.ReadDir(inputFilesPath)
+	if err != nil {
+		t.Fatalf("Error reading input directory: %v", err)
+	}
+
 	for _, inputFile := range inputFiles {
+		inputFilePath := filepath.Join(inputFilesPath, inputFile.Name())
 		for _, item := range items {
-			if strings.HasPrefix(item.Name(), ".") {
+			if strings.HasPrefix(item.Name(), ".") || item.Name() == "examples" {
 				continue
 			}
 			func() {
 				if item.IsDir() {
 					packagePath := "." + string(os.PathSeparator) + item.Name()
-					args := []string{"run", packagePath, "stop_words.txt", inputFile}
+					args := []string{"run", packagePath, filepath.Join("examples", "stop_words.txt"), inputFilePath}
 					if item.Name() == "persistent_tables" {
-						dbFile := fmt.Sprintf("%v%v%v%v.db", os.TempDir(), string(os.PathSeparator), inputFile, getRandomDBName())
+						dbFile := filepath.Join(os.TempDir(), inputFile.Name()+getRandomDBName()+".db")
 						args = append(args, dbFile)
 						defer func(name string) {
 							err := os.Remove(name)
@@ -47,18 +53,18 @@ func TestOutputs(t *testing.T) {
 
 					err = cmd.Start()
 					if err != nil {
-						t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
+						t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile.Name(), err)
 					}
 					defer func(cmd *exec.Cmd) {
 						err := cmd.Wait()
 						if err != nil {
-							t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile, err)
+							t.Fatalf("Error running %v on %v: %v\n", item.Name(), inputFile.Name(), err)
 						}
 					}(cmd)
 
 					stdOutBytes, err := io.ReadAll(stdoutPipe)
 					if err != nil {
-						t.Fatalf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile, err)
+						t.Fatalf("Error reading stdout of %v on %v: %v\n", item.Name(), inputFile.Name(), err)
 					}
 
 					f, err := os.CreateTemp(os.TempDir(), "test_"+item.Name())
@@ -103,7 +109,7 @@ func TestOutputs(t *testing.T) {
 
 					stdOutBytes, err = io.ReadAll(stdoutPipe)
 					if err != nil {
-						t.Fatalf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile, err)
+						t.Fatalf("Error reading stdout of sort on %v-%v: %v\n", item.Name(), inputFile.Name(), err)
 					}
 
 					f2, err := os.CreateTemp(os.TempDir(), "sorted_test_"+item.Name())
@@ -129,7 +135,7 @@ func TestOutputs(t *testing.T) {
 						return
 					}
 
-					expectedOutputFile := fmt.Sprintf(".output%v%v", string(os.PathSeparator), inputFile)
+					expectedOutputFile := filepath.Join("examples", "output", inputFile.Name())
 
 					diffCmd := exec.Command("diff", "-u", f2.Name(), expectedOutputFile)
 					stdoutPipe, err = diffCmd.StdoutPipe()
