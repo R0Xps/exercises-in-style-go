@@ -8,12 +8,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
 func TestOutputs(t *testing.T) {
-	items, err := os.ReadDir(".")
+	items, err := os.ReadDir("cmd")
 	if err != nil {
 		t.Fatalf("Error reading root directory: %v", err)
 	}
@@ -27,12 +26,10 @@ func TestOutputs(t *testing.T) {
 	for _, inputFile := range inputFiles {
 		inputFilePath := filepath.Join(inputFilesPath, inputFile.Name())
 		for _, item := range items {
-			if strings.HasPrefix(item.Name(), ".") || item.Name() == "examples" {
-				continue
-			}
-			func() {
-				if item.IsDir() {
-					packagePath := "." + string(os.PathSeparator) + item.Name()
+			if item.IsDir() {
+				func() {
+
+					packagePath := "." + string(os.PathSeparator) + filepath.Join("cmd", item.Name())
 					args := []string{"run", packagePath, filepath.Join("examples", "stop_words.txt"), inputFilePath}
 					if item.Name() == "persistent_tables" {
 						dbFile := filepath.Join(os.TempDir(), inputFile.Name()+getRandomDBName()+".db")
@@ -153,8 +150,8 @@ func TestOutputs(t *testing.T) {
 							t.Fatalf("Error running diff command: %v", err)
 						}
 					}(diffCmd)
-				}
-			}()
+				}()
+			}
 		}
 	}
 }
