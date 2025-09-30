@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // wordFreqEntry struct is used to store a word-frequency pair
@@ -41,13 +40,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stopWordsString := string(stopWordsBytes) + " "
+	// Add a space after the string for the last word to be counted correctly, instead of adding all the word check/count logic after the loop again
+	stopWordsBytes = append(stopWordsBytes, ' ')
 
 	stopWords := make([]string, 0)
 
 	start := -1
 	// Iterate over characters in the stop words file
-	for i, c := range stopWordsString {
+	for i, c := range stopWordsBytes {
 		if start == -1 {
 			// We're currently not in a word
 			if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' {
@@ -62,7 +62,14 @@ func main() {
 			// When we reach this point, we're at the character immediately after a word
 
 			// Copy the entire word and convert it to lowercase
-			word := strings.ToLower(stopWordsString[start:i])
+			wordBytes := stopWordsBytes[start:i]
+			for j := range wordBytes {
+				if wordBytes[j] >= 'A' && wordBytes[j] <= 'Z' {
+					wordBytes[j] += 32
+				}
+			}
+
+			word := string(wordBytes)
 			// Add the word to the stopWords slice
 			stopWords = append(stopWords, word)
 			// After we're done with a word, we want to look for the next one, so we reset the start index to -1
@@ -87,15 +94,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// I add a space after the string for the last word to be counted correctly, instead of adding all the word check/count logic after the loop again
-	inputString := string(inputBytes) + " "
+	// Add a space after the string for the last word to be counted correctly, instead of adding all the word check/count logic after the loop again
+	inputBytes = append(inputBytes, ' ')
 
 	// This slice is used to store the words and their frequencies in descending order by frequency
 	wordFreq := make([]wordFreqEntry, 0)
 
 	start = -1
 	// Iterate over characters in the input file
-	for i, c := range inputString {
+	for i, c := range inputBytes {
 		if start == -1 {
 			// We're currently not in a word
 			if c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' {
@@ -110,7 +117,14 @@ func main() {
 			// When we reach this point, we're at the character immediately after a word
 
 			// Copy the entire word and convert it to lowercase
-			word := strings.ToLower(inputString[start:i])
+			wordBytes := inputBytes[start:i]
+			for j := range wordBytes {
+				if wordBytes[j] >= 'A' && wordBytes[j] <= 'Z' {
+					wordBytes[j] += 32
+				}
+			}
+
+			word := string(wordBytes)
 
 			// Look for the word in the stopWords slice
 			isStopWord := false
